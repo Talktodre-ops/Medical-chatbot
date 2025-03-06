@@ -1,49 +1,20 @@
-from flask import Flask, request, jsonify, render_template
-import os
-from dotenv import load_dotenv
-from google.generativeai import configure, GenerativeModel
+from fastapi import FastAPI, HTTPException
+from src.medical_chatbot import handle_user_query
+from pydantic import BaseModel
 
-# Load environment variables
-load_dotenv()
-GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
+app = FastAPI()
 
-# Configure Gemini
-configure(api_key=GOOGLE_API_KEY)
-model = GenerativeModel('gemini-pro')
+class QueryRequest(BaseModel):
+    question: str
 
-# Initialize Flask app
-app = Flask(__name__)
-
-# Serve frontend
-@app.route('/')
-def index():
-    return render_template('chat.html')
-
-# Direct Gemini API endpoint
-@app.route('/api/ask', methods=['POST'])
-def ask_question():
-    data = request.get_json()
-    question = data.get('question', '')
-    
-    if not question:
-        return jsonify({"error": "Question is required"}), 400
-    
+@app.post("/ask")
+async def ask_question(request: QueryRequest):
     try:
-        response = model.generate_content(
-            f"""You are a medical assistant. Answer this question concisely:
-            {question}
-            
-            If the question is not health-related, say "I can only answer medical questions".
-            Never provide medical advice - always recommend consulting a doctor."""
-        )
-        return jsonify({"answer": response.text})
+        response = handle_user_query(request.question)
+        return {"answer": response}
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-# Health check
-@app.route('/health')
+@app.get("/health")
 def health_check():
-    return jsonify({"status": "healthy"})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    return {"status": "healthy"}

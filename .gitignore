@@ -169,3 +169,27 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Environment files
+.env
+*.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+
+# API keys
+*_key.txt
+secrets/
+
+# Secrets
+*.env
+credentials.json
+service_account.json
+
+# IDE
+.vscode/
+.idea/
